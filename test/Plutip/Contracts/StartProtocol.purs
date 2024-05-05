@@ -1,9 +1,9 @@
 module Test.Plutip.Contracts.StartProtocol (suite, startProtocolParams) where
 
-import Prelude
+import Contract.Prelude
 
 import Contract.Monad (Contract)
-import Contract.Test.Plutip (InitialUTxOs, withWallets)
+import Contract.Test.Plutip (withWallets)
 import Contract.Wallet (withKeyWallet)
 import Control.Monad.Error.Class (try)
 import Ctl.Internal.Test.ContractTest (ContractTest)
@@ -12,6 +12,7 @@ import Data.BigInt as BigInt
 import Mote (group, test)
 import Protocol.StartProtocol as StartProtocol
 import Protocol.UserData (ProtocolConfigParams(..))
+import Test.Plutip.Fixtures (aliceDistribution, emptyAliceBobDistribution)
 import Test.Plutip.Utils (isExpectedError)
 import Test.Spec.Assertions (shouldSatisfy)
 
@@ -20,28 +21,10 @@ suite = do
   group "Start Protocol" do
 
     test "Should successfully start protocol" do
-      let
-        distribution :: InitialUTxOs
-        distribution =
-          [ BigInt.fromInt 1_000_000_000
-          , BigInt.fromInt 2_000_000_000
-          ]
-      withWallets distribution \alice -> withKeyWallet alice $ void $ StartProtocol.startProtocol startProtocolParams
-
-    -- test "Should successfully start system" do
-    --   let
-    --     distribution :: InitialUTxOs
-    --     distribution =
-    --       [ BigInt.fromInt 1_000_000_000
-    --       , BigInt.fromInt 2_000_000_000
-    --       ]
-    --   withWallets distribution \alice -> withKeyWallet alice $ startProtocolContract startProtocolParams
-
+      withWallets aliceDistribution \alice -> withKeyWallet alice $ void $ StartProtocol.startProtocol startProtocolParams
     test "Should fail if user wallet doesn't have any UTxOs" do
-      let
-        distribution :: InitialUTxOs
-        distribution = []
-      withWallets distribution \alice -> do
+      
+      withWallets emptyAliceBobDistribution \(alice /\ _) -> do
         result <- try $ withKeyWallet alice $ startProtocolContract startProtocolParams
         let errMsg = "Utxo set is empty"
         result `shouldSatisfy` (isExpectedError errMsg)

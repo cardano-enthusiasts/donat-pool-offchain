@@ -17,21 +17,21 @@ import Protocol.StartProtocol as StartProtocol
 import Test.Plutip.Contracts.StartProtocol (startProtocolParams)
 import Test.Plutip.Utils (isExpectedError)
 import Test.Spec.Assertions (shouldSatisfy)
-import Test.Plutip.Fixtures (distribution, incorrectFundraisingData, minDurationStartProtocolParams)
+import Test.Plutip.Fixtures (aliceBobDistribution, incorrectFundraisingData, minDurationStartProtocolParams)
 
 suite :: TestPlanM ContractTest Unit
 suite = do
   group "Receive funds" do
 
     test "Should successfully receive funds when fundraising goal is reached" do
-      withWallets distribution \(alice /\ bob) -> do
+      withWallets aliceBobDistribution \(alice /\ bob) -> do
         protocolData <- withKeyWallet alice $ StartProtocol.startSystem startProtocolParams
         frData <- createTestFundraising bob protocolData (mkFundraisingParams 80 (mkFundraisingDuration 0 0 10))
         withKeyWallet alice $ void $ Donate.contract protocolData frData 80
         withKeyWallet bob $ void $ ReceiveFunds.contract protocolData frData
 
     test "Should successfully receive funds when time is over" do
-      withWallets distribution \(alice /\ bob) -> do
+      withWallets aliceBobDistribution \(alice /\ bob) -> do
         protocolData <- withKeyWallet alice $ StartProtocol.startSystem minDurationStartProtocolParams
         frData <- createTestFundraising bob protocolData (mkFundraisingParams 80 (mkFundraisingDuration 0 0 1))
         withKeyWallet alice $ void $ Donate.contract protocolData frData 50
@@ -39,7 +39,7 @@ suite = do
         withKeyWallet bob $ void $ ReceiveFunds.contract protocolData frData
 
     test "Should fail if fundraising does not exist" do
-      withWallets distribution \(alice /\ bob) -> do
+      withWallets aliceBobDistribution \(alice /\ bob) -> do
         protocolData <- withKeyWallet alice $ StartProtocol.startSystem startProtocolParams
         frData <- incorrectFundraisingData
         result <- try $ withKeyWallet bob $ void $ ReceiveFunds.contract protocolData frData
@@ -47,7 +47,7 @@ suite = do
         result `shouldSatisfy` (isExpectedError errMsg)
 
     test "Should fail if called from foreign wallet" do
-      withWallets distribution \(alice /\ bob) -> do
+      withWallets aliceBobDistribution \(alice /\ bob) -> do
         protocolData <- withKeyWallet alice $ StartProtocol.startSystem startProtocolParams
         frData <- createTestFundraising bob protocolData (mkFundraisingParams 80 (mkFundraisingDuration 0 0 10))
         withKeyWallet alice $ void $ Donate.contract protocolData frData 80
@@ -56,7 +56,7 @@ suite = do
         result `shouldSatisfy` (isExpectedError errMsg)
 
     test "Should fail if neither fundraising goal reached nor fundraising time is over" do
-      withWallets distribution \(alice /\ bob) -> do
+      withWallets aliceBobDistribution \(alice /\ bob) -> do
         protocolData <- withKeyWallet alice $ StartProtocol.startSystem startProtocolParams
         frData <- createTestFundraising bob protocolData (mkFundraisingParams 80 (mkFundraisingDuration 0 0 10))
         withKeyWallet alice $ void $ Donate.contract protocolData frData 20
