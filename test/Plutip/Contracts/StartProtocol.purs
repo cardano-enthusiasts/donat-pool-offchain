@@ -23,7 +23,7 @@ suite = do
     test "Should successfully start protocol" do
       withWallets aliceDistribution \alice -> withKeyWallet alice $ void $ StartProtocol.startProtocol startProtocolParams
     test "Should fail if user wallet doesn't have any UTxOs" do
-      
+
       withWallets emptyAliceBobDistribution \(alice /\ _) -> do
         result <- try $ withKeyWallet alice $ startProtocolContract startProtocolParams
         let errMsg = "Failed to get non collateral utxo"

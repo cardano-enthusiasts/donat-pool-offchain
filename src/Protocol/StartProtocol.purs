@@ -114,14 +114,15 @@ startProtocol params@(ProtocolConfigParams confParams) = do
           (Datum $ toData initialProtocolDatum)
           Constraints.DatumInline
           paymentToProtocol
-        -- <> govConstraints
+
+    -- <> govConstraints
 
     lookups :: Lookups.ScriptLookups Void
     lookups =
       Lookups.mintingPolicy mp
         <> Lookups.unspentOutputs creds.ownUtxos
         <> Lookups.validator protocolValidator
-        -- <> govLookups
+  -- <> govLookups
 
   completeTx lookups constraints ownCreds
 
