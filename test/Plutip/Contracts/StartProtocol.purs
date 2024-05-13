@@ -26,7 +26,7 @@ suite = do
       
       withWallets emptyAliceBobDistribution \(alice /\ _) -> do
         result <- try $ withKeyWallet alice $ startProtocolContract startProtocolParams
-        let errMsg = "Utxo set is empty"
+        let errMsg = "Failed to get non collateral utxo"
         result `shouldSatisfy` (isExpectedError errMsg)
 
 startProtocolParams :: ProtocolConfigParams

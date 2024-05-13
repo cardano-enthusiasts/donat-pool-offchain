@@ -1,4 +1,4 @@
-module Test.Plutip
+module Test.Protocol
   ( main
   ) where
 
@@ -14,14 +14,11 @@ import Effect.Aff (Milliseconds(Milliseconds), cancelWith, effectCanceler, launc
 import Mote (group)
 import Test.Plutip.Common (config)
 import Test.Plutip.Contracts.CloseProtocol as CloseProtocol
-import Test.Plutip.Contracts.CreateFundraising as CreateFundraising
 import Test.Plutip.Contracts.StartProtocol as StartProtocol
 import Test.Plutip.Contracts.UpdateProtocol as UpdateProtocol
 import Test.Spec.Runner (defaultConfig)
-import Test.Plutip.Contracts.Donate as Donate
-import Test.Plutip.Contracts.ReceiveFunds as ReceiveFunds
 
--- Run tests with 'spago run --main Test.Plutip'
+-- Run tests with 'spago run --main Test.Protocol'
 main :: Effect Unit
 main = interruptOnSignal SIGINT =<< launchAff do
   flip cancelWith (effectCanceler (exitCode 1)) do
@@ -32,6 +29,3 @@ main = interruptOnSignal SIGINT =<< launchAff do
             StartProtocol.suite
             UpdateProtocol.suite
             CloseProtocol.suite
-            CreateFundraising.suite
-            Donate.suite
-            ReceiveFunds.suite
