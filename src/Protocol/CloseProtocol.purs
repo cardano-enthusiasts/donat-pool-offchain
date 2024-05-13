@@ -62,6 +62,7 @@ contract protocolData = do
     lookups =
       Lookups.mintingPolicy mp
         <> Lookups.unspentOutputs protocolInfo.pUtxos
+        <> Lookups.unspentOutputs creds.ownUtxos
 
   completeTx lookups constraints ownCreds
 
