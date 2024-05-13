@@ -2,7 +2,8 @@ module Shared.OwnCredentials where
 
 import Contract.Prelude
 
-import Contract.Address (Address, AddressWithNetworkTag, PaymentPubKeyHash(..), PubKeyHash, StakePubKeyHash(..), addressWithNetworkTagToBech32, getWalletAddressesWithNetworkTag, ownPaymentPubKeysHashes, ownStakePubKeysHashes, toPubKeyHash, toStakingCredential)
+import Contract.Address (Address, AddressWithNetworkTag, PaymentPubKeyHash(..), PubKeyHash, StakePubKeyHash(..), addressWithNetworkTagToBech32, toPubKeyHash, toStakingCredential)
+import Contract.Wallet (getWalletAddressesWithNetworkTag, ownPaymentPubKeyHashes, ownStakePubKeyHashes)
 import Contract.Credential (Credential(..), StakingCredential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM, liftedM)
@@ -29,7 +30,7 @@ newtype OwnCredentials = OwnCredentials
 getOwnCreds :: Contract OwnCredentials
 getOwnCreds = do
   (ownPkh /\ ownAddressWithNetworkTag) <- getOwnPkhAndAddress
-  mbOwnSkh <- join <<< Array.head <$> ownStakePubKeysHashes
+  mbOwnSkh <- join <<< Array.head <$> ownStakePubKeyHashes
   ownSkh <- liftContractM "Failed to get own SKH" mbOwnSkh
   allUtxos <- utxosAt ownAddressWithNetworkTag
   nonCollateralUtxos <- getNonCollateralUtxo allUtxos
@@ -59,7 +60,7 @@ getOwnUserInfo managerPkh = do
 
 getOwnPkhAndAddress ∷ Contract (Tuple PaymentPubKeyHash AddressWithNetworkTag)
 getOwnPkhAndAddress = do
-  ownHashes <- ownPaymentPubKeysHashes
+  ownHashes <- ownPaymentPubKeyHashes
   ownPkh <- liftContractM "Impossible to get own PaymentPubkeyHash" $ Array.head ownHashes
   logInfo' $ "Own Payment pkh is: " <> show ownPkh
   ownAddressWithNetworkTag <- liftedM "Failed to get own address" $ Array.head <$> getWalletAddressesWithNetworkTag

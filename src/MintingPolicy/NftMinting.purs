@@ -2,7 +2,7 @@ module MintingPolicy.NftMinting where
 
 import Contract.Prelude
 
-import Contract.Address (getWalletAddresses)
+import Contract.Wallet (getWalletAddresses)
 import Contract.Config (ContractParams, testnetNamiConfig)
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, launchAff_, runContract, liftContractM, liftContractE, liftedM)
