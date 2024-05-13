@@ -1,7 +1,6 @@
 module Test.Main (main) where
 
 import Prelude
-
 import Effect (Effect)
 import Test.UnitTests as UnitTests
 

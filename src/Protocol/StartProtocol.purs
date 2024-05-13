@@ -98,7 +98,8 @@ startProtocol params@(ProtocolConfigParams confParams) = do
     protocolNftValue = Value.singleton cs protocolTn one
     paymentToProtocol = Value.lovelaceValueOf (fromInt 2000000) <> protocolNftValue
 
-  (govConstraints /\ govLookups) <- getGovernanceConstraints protocol
+  -- TODO: start governance script in separate tx
+  -- (govConstraints /\ govLookups) <- getGovernanceConstraints protocol
 
   let
     constraints :: Constraints.TxConstraints Void Void
@@ -113,14 +114,15 @@ startProtocol params@(ProtocolConfigParams confParams) = do
           (Datum $ toData initialProtocolDatum)
           Constraints.DatumInline
           paymentToProtocol
-        <> govConstraints
+
+    -- <> govConstraints
 
     lookups :: Lookups.ScriptLookups Void
     lookups =
       Lookups.mintingPolicy mp
         <> Lookups.unspentOutputs creds.ownUtxos
         <> Lookups.validator protocolValidator
-        <> govLookups
+  -- <> govLookups
 
   completeTx lookups constraints ownCreds
 
