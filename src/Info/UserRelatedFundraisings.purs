@@ -2,7 +2,7 @@ module Info.UserRelatedFundraisings where
 
 import Contract.Prelude
 
-import Contract.Address (ownPaymentPubKeysHashes)
+import Contract.Wallet (ownPaymentPubKeyHashes)
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM)
 import Data.Array as Array
@@ -20,7 +20,7 @@ runGetUserRelatedFundraisings onComplete onError protocolData networkParams = do
 getUserRelatedFundraisings :: ProtocolData -> Contract (Array FundraisingInfo)
 getUserRelatedFundraisings protocolData = do
   allFrs <- getAllFundraisings protocolData
-  ownHashes <- ownPaymentPubKeysHashes
+  ownHashes <- ownPaymentPubKeyHashes
   ownPkh <- liftContractM "Impossible to get own PaymentPubkeyHash" $ Array.head ownHashes
   logInfo' $ "Own Payment pkh is: " <> show ownPkh
   pkh <- pkhToBech32M ownPkh

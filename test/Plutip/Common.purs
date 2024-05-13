@@ -6,14 +6,14 @@ module Test.Plutip.Common
 import Prelude
 
 import Contract.Config (emptyHooks)
+import Contract.Test.Plutip (defaultPlutipConfig)
 import Contract.Wallet (privateKeyFromBytes)
 import Ctl.Internal.Plutip.Types (PlutipConfig)
 import Ctl.Internal.Types.RawBytes (hexToRawBytes)
 import Ctl.Internal.Wallet.Key (PrivateStakeKey)
 import Data.Log.Level (LogLevel(Trace))
-import Data.Maybe (Maybe(Nothing), fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (wrap)
-import Data.Time.Duration (Seconds(Seconds))
 import Data.UInt (fromInt) as UInt
 import Partial.Unsafe (unsafePartial)
 
@@ -38,8 +38,7 @@ config =
   , suppressLogs: true
   , customLogger: Nothing
   , hooks: emptyHooks
-  , clusterConfig:
-      { slotLength: Seconds 0.1 }
+  , clusterConfig: defaultPlutipConfig.clusterConfig { maxTxSize = Just $ UInt.fromInt 16384 }
   }
 
 privateStakeKey :: PrivateStakeKey
