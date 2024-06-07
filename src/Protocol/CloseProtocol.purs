@@ -20,7 +20,9 @@ import Protocol.Redeemer (PProtocolRedeemer(PCloseProtocol))
 import Protocol.UserData (ProtocolData, dataToProtocol)
 import Shared.KeyWalletConfig (testnetKeyWalletConfig)
 import Shared.OwnCredentials (OwnCredentials(..), getOwnCreds, getPkhSkhFromAddress)
+import Shared.ScriptRef (getVerTokenPolicyRef)
 import Shared.Tx (completeTx)
+import Shared.Utxo (getUtxoByScriptRef)
 
 runCloseProtocol :: Effect Unit
 runCloseProtocol = do
@@ -38,6 +40,9 @@ contract protocolData = do
   when (managerPkh /= creds.ownPkh) $ liftEffect $ throw "current user doesn't have permissions to close protocol"
   let nftOref = (unwrap protocolInfo.pDatum).tokenOriginRef
   mp <- NFT.mintingPolicy nftOref
+  verTokenPolicyRef <- getVerTokenPolicyRef protocol
+  verTokenRefUtxo <- getUtxoByScriptRef "VerTOken" verTokenPolicyRef protocolInfo.pUtxos
+
   let
     protocolRedeemer = Redeemer $ toData PCloseProtocol
     nftToBurnValue = Value.singleton protocolCurrency protocolTokenName (fromInt (-1))
@@ -56,7 +61,9 @@ contract protocolData = do
           creds.ownSkh
           (Value.lovelaceValueOf (fromInt 2000000))
         <> Constraints.mustBeSignedBy creds.ownPkh
+        <> Constraints.mustReferenceOutput (fst protocolInfo.pUtxo)
         <> Constraints.mustReferenceOutput (fst protocolInfo.references.pScriptRef)
+        <> Constraints.mustReferenceOutput (fst verTokenRefUtxo)
 
     lookups :: Lookups.ScriptLookups Void
     lookups =
