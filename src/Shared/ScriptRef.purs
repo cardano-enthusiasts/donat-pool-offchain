@@ -5,11 +5,11 @@ import Contract.Prelude
 import Contract.Credential (Credential(..))
 import Contract.Log (logInfo')
 import Contract.Monad (Contract, liftContractM)
-import Contract.PlutusData (unitDatum)
 import Contract.ScriptLookups as Lookups
 import Contract.Scripts (MintingPolicy(..), PlutusScript)
 import Contract.Transaction (ScriptRef(..))
 import Contract.TxConstraints as Constraints
+import Ctl.Internal.Hashing as Hashing
 import Ctl.Internal.Plutus.Types.Transaction (UtxoMap)
 import Ctl.Internal.Types.Scripts (ValidatorHash)
 import Data.Array as Array
@@ -27,8 +27,9 @@ import Protocol.ProtocolScript (getProtocolValidatorHash, protocolValidatorScrip
 import Protocol.UserData (ProtocolData, dataToProtocol)
 import Shared.MinAda (sevenMinAdaValue)
 import Shared.OwnCredentials (getOwnCreds)
+import Shared.ScriptRefDatum (PScriptRefDatum(..))
+import Shared.Tx (completeTx, toDatum)
 import Shared.Utxo (UtxoTuple)
-import Shared.Tx (completeTx)
 
 createRefScriptUtxo ∷ String -> ScriptRef -> ValidatorHash → Contract Unit
 createRefScriptUtxo _ (NativeScriptRef _) _ = liftEffect $ throw "Unexpected scriptRef type: waiting for PlutusScriptRef"
@@ -36,11 +37,13 @@ createRefScriptUtxo scriptName scriptRef@(PlutusScriptRef _) validatorHash = do
   logInfo' $ "Start to create " <> scriptName <> " reference script"
   ownCreds <- getOwnCreds
   let
+    datum = PScriptRefDatum { scriptName: scriptName }
+
     constraints :: Constraints.TxConstraints Void Void
     constraints = Constraints.mustPayToScriptAddressWithScriptRef
       validatorHash
       (ScriptCredential validatorHash)
-      unitDatum
+      (toDatum datum)
       Constraints.DatumWitness
       scriptRef
       sevenMinAdaValue
@@ -48,6 +51,8 @@ createRefScriptUtxo scriptName scriptRef@(PlutusScriptRef _) validatorHash = do
     lookups :: Lookups.ScriptLookups Void
     lookups = mempty
 
+  let datumHash = Hashing.datumHash $ toDatum datum
+  logInfo' $ "[DATUM_HASH] " <> scriptName <> " reference script datum hash: " <> show datumHash
   completeTx lookups constraints ownCreds
 
   logInfo' $ scriptName <> " UTxO with reference script created"
@@ -84,11 +89,15 @@ mkGovernanceRefScript protocol = do
   let scriptRef = PlutusScriptRef (unwrap governanceValidator)
   createRefScriptUtxo "Governance" scriptRef governanceValidatorHash
 
-createPolicyRefUtxo :: String -> MintingPolicy → ValidatorHash → Contract Unit
-createPolicyRefUtxo _ (NativeMintingPolicy _) _ = liftEffect $ throw "Unexpected minting policy type"
-createPolicyRefUtxo mpName (PlutusMintingPolicy policy) validatorHash = do
+getPolicyScriptRef :: String -> MintingPolicy → Contract ScriptRef
+getPolicyScriptRef _ (NativeMintingPolicy _) = liftEffect $ throw "Unexpected minting policy type"
+getPolicyScriptRef mpName (PlutusMintingPolicy policy) = do
   logInfo' $ "Creating UTxO with " <> mpName <> " minting policy reference"
-  let scriptRef = PlutusScriptRef policy
+  pure $ PlutusScriptRef policy
+
+createPolicyRefUtxo :: String -> MintingPolicy → ValidatorHash → Contract Unit
+createPolicyRefUtxo mpName policy validatorHash = do
+  scriptRef <- getPolicyScriptRef mpName policy
   createRefScriptUtxo "VerTokenPolicy" scriptRef validatorHash
   logInfo' $ "UTxO with " <> mpName <> " minting policy reference created"
 
@@ -98,6 +107,11 @@ mkVerTokenPolicyRef protocolData = do
   protocolValidatorHash <- getProtocolValidatorHash protocol
   policy <- VerToken.mintingPolicy protocol
   createPolicyRefUtxo "VerToken" policy protocolValidatorHash
+
+getVerTokenPolicyRef ∷ Protocol → Contract ScriptRef
+getVerTokenPolicyRef protocol = do
+  policy <- VerToken.mintingPolicy protocol
+  getPolicyScriptRef "VerToken" policy
 
 hasExpectedRefScript :: PlutusScript -> UtxoTuple -> Boolean
 hasExpectedRefScript plutusScript (_ /\ txOutput) =
