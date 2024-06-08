@@ -26,7 +26,6 @@ main = interruptOnSignal SIGINT =<< launchAff do
       defaultConfig { timeout = Just $ Milliseconds 70_000.0, exit = true }
       $ group "Plutip" do
           testPlutipContracts config $ do
-            -- NOTE: commented for faster testing. Close protocol is the most frequently place where missingRequiredDatums error occurs)
             StartProtocol.suite
             UpdateProtocol.suite
             CloseProtocol.suite
