@@ -14,8 +14,8 @@ import Effect.Aff (Milliseconds(Milliseconds), cancelWith, effectCanceler, launc
 import Mote (group)
 import Test.Plutip.Common (config)
 import Test.Plutip.Contracts.CloseProtocol as CloseProtocol
--- import Test.Plutip.Contracts.StartProtocol as StartProtocol
--- import Test.Plutip.Contracts.UpdateProtocol as UpdateProtocol
+import Test.Plutip.Contracts.StartProtocol as StartProtocol
+import Test.Plutip.Contracts.UpdateProtocol as UpdateProtocol
 import Test.Spec.Runner (defaultConfig)
 
 -- Run tests with 'spago run --main Test.Protocol'
@@ -27,6 +27,6 @@ main = interruptOnSignal SIGINT =<< launchAff do
       $ group "Plutip" do
           testPlutipContracts config $ do
             -- NOTE: commented for faster testing. Close protocol is the most frequently place where missingRequiredDatums error occurs)
-            -- StartProtocol.suite
-            -- UpdateProtocol.suite
+            StartProtocol.suite
+            UpdateProtocol.suite
             CloseProtocol.suite
